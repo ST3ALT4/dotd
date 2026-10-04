@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Extensions browsers use for unfinished downloads. These are never moved.
@@ -39,7 +40,7 @@ type Tracker struct {
 	root    string
 	cfg     *Config
 	pending map[string]fileState // files seen once, waiting to be stable
-	lastMod int64                // root dir mtime (ns) at the last scan
+	lastMod time.Time            // root dir mtime at the last scan
 }
 
 // Poll is called on every tick. It costs a single stat() call and only
@@ -53,7 +54,7 @@ func (t *Tracker) Poll() {
 	}
 	// Read mtime *before* scanning: a change that lands mid-scan makes the
 	// next Poll see a different value and scan again.
-	mod := info.ModTime().UnixNano()
+	mod := info.ModTime()
 	if mod == t.lastMod && len(t.pending) == 0 {
 		return
 	}
@@ -61,6 +62,7 @@ func (t *Tracker) Poll() {
 	t.Scan()
 }
 
+// NewTracker creates a Tracker that watches root and classifies files per cfg.
 func NewTracker(root string, cfg *Config) *Tracker {
 	return &Tracker{root: root, cfg: cfg, pending: make(map[string]fileState)}
 }
@@ -137,6 +139,10 @@ func (t *Tracker) move(src, dir string) (string, error) {
 	return dest, nil
 }
 
+// uniquePath returns a path inside dir for a file named name that does not
+// already exist. On collision, it appends " (1)", " (2)", … before the
+// extension until a free slot is found. Uses Lstat so symlinks are treated
+// as occupied, matching the behaviour of most file managers.
 func uniquePath(dir, name string) string {
 	ext := filepath.Ext(name)
 	base := strings.TrimSuffix(name, ext)
@@ -147,4 +153,10 @@ func uniquePath(dir, name string) string {
 		}
 		dest = filepath.Join(dir, fmt.Sprintf("%s (%d)%s", base, i, ext))
 	}
+}
+
+// UniquePath is the exported version of uniquePath for use in tests and
+// other packages that need collision-free file naming.
+func UniquePath(dir, name string) string {
+	return uniquePath(dir, name)
 }

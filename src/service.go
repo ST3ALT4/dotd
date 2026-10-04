@@ -12,6 +12,8 @@ import (
 
 const unitName = "dotd.service"
 
+// systemdAvailable reports whether systemctl is present on PATH, indicating
+// this is a systemd-based system.
 func systemdAvailable() bool {
 	_, err := exec.LookPath("systemctl")
 	return err == nil
@@ -30,10 +32,13 @@ func systemctl(args ...string) error {
 	return nil
 }
 
+// systemdActive reports whether the dotd systemd user service is currently running.
 func systemdActive() bool {
 	return systemdAvailable() && systemctl("is-active", "--quiet", unitName) == nil
 }
 
+// unitPath returns the canonical location of the systemd user unit file:
+// ~/.config/systemd/user/dotd.service.
 func unitPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {

@@ -18,6 +18,8 @@ Usage:
   dotd run         run in the foreground (used by systemd)
 `
 
+// main is the CLI entry point. It dispatches to the appropriate src function
+// based on the first argument, then exits non-zero on any error.
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Print(usage)
