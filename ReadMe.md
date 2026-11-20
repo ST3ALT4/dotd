@@ -46,8 +46,6 @@ Each entry maps a file extension to a folder inside `~/Downloads`. Edit the file
 dotd stop && dotd start
 ```
 
-Default types: `.pdf` `.png` `.jpg` `.txt` `.md` `.xlsx` `.pptx` `.html` `.js` `.py` `.zip` `.tar`
-
 ## How it works
 
 - dotd checks the modified time of `~/Downloads` and only scans the folder when something changed.
